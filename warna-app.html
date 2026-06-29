@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1a3a6b">
+  <title>WARNA – Warn-App</title>
+  
+  <style>/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #1a3a6b;
+  --primary-dark: #122852;
+  --primary-light: #2a5298;
+  --accent-red: #c0392b;
+  --accent-orange: #e67e22;
+  --accent-yellow: #f1c40f;
+  --accent-green: #27ae60;
+  --bg: #f0f2f5;
+  --bg-card: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --tabbar-h: 72px;
+  --topbar-h: 54px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --radius: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+
+#app { width: 100%; height: 100%; max-width: 480px; margin: 0 auto; position: relative; background: var(--bg); overflow: hidden; }
+
+/* ===== SCREENS ===== */
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ===== LOGIN ===== */
+#login-screen { background: linear-gradient(160deg, #1a3a6b 0%, #2a5298 50%, #1a6b4a 100%); align-items: center; justify-content: center; }
+.login-container { width: 90%; max-width: 360px; }
+.login-logo { text-align: center; margin-bottom: 40px; color: white; }
+.logo-icon { font-size: 60px; margin-bottom: 8px; }
+.login-logo h1 { font-size: 36px; font-weight: 800; letter-spacing: 4px; }
+.login-logo p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+.login-form { background: rgba(255,255,255,0.95); border-radius: 20px; padding: 28px 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.login-form h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--primary); }
+.input-group { margin-bottom: 14px; }
+.input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.input-group input, .input-group select, .input-group textarea { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s; background: #fafafa; }
+.input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--primary-light); background: white; }
+.error-msg { color: var(--accent-red); font-size: 13px; margin-bottom: 10px; }
+
+/* ===== BUTTONS ===== */
+.btn-primary { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 4px; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-secondary { width: 100%; padding: 12px; background: white; color: var(--primary); border: 1.5px solid var(--primary); border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+.btn-danger { background: var(--accent-red); color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+.btn-text { width: 100%; padding: 12px; background: none; border: none; color: var(--primary); font-size: 14px; cursor: pointer; margin-top: 4px; opacity: 0.8; }
+
+/* ===== TOPBAR ===== */
+.topbar { height: var(--topbar-h); background: var(--primary); color: white; display: flex; align-items: center; padding: 0 8px; padding-top: var(--safe-top); flex-shrink: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.topbar-title { flex: 1; text-align: center; font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
+.back-btn { background: none; border: none; color: white; font-size: 28px; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.topbar-action { background: none; border: none; color: white; font-size: 18px; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+.topbar-action:hover { background: rgba(255,255,255,0.15); }
+.admin-topbar { background: #7b2226; }
+
+/* ===== MAIN CONTENT ===== */
+.main-content { flex: 1; overflow: hidden; position: relative; }
+
+/* ===== VIEWS ===== */
+.view { position: absolute; inset: 0; overflow-y: auto; display: none; -webkit-overflow-scrolling: touch; }
+.view.active { display: block; }
+
+/* ===== MAP ===== */
+.map-placeholder { position: relative; background: #d4e6b5; overflow: hidden; height: 280px; flex-shrink: 0; }
+.map-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #c8dba0 0%, #b8d090 30%, #9ec87a 60%, #d4e6b5 100%); }
+.germany-svg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 200px; height: 250px; }
+.land { fill: #4a7c59; stroke: #2d5a3d; stroke-width: 1; }
+.map-warnings-overlay { position: absolute; inset: 0; pointer-events: none; }
+.map-legend { position: absolute; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 8px; padding: 6px 10px; font-size: 11px; }
+.legend-item { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot.red { background: var(--accent-red); }
+.dot.orange { background: var(--accent-orange); }
+.dot.yellow { background: var(--accent-yellow); }
+.map-warning-circle { position: absolute; border-radius: 50%; opacity: 0.5; pointer-events: none; }
+
+/* ===== WARNINGS SECTION ===== */
+.warnings-section { background: white; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; font-size: 15px; font-weight: 700; color: var(--primary); border-bottom: 1px solid var(--border); }
+.badge { background: var(--accent-red); color: white; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 12px; min-width: 22px; text-align: center; }
+.warnings-list { padding: 8px 0; }
+.warning-card { display: flex; align-items: flex-start; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; gap: 12px; transition: background 0.15s; }
+.warning-card:hover, .warning-card:active { background: #f8f9fa; }
+.warning-card-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.warning-card-body { flex: 1; min-width: 0; }
+.warning-card-title { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.warning-card-meta { display: flex; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+.warning-card-region { font-size: 12px; color: var(--text-muted); }
+.warning-card-time { font-size: 11px; color: var(--text-muted); }
+.warning-level-tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 6px; }
+.level-extrem { background: #fde8e8; color: #c0392b; }
+.level-schwer { background: #fde8e8; color: #c0392b; }
+.level-warnung { background: #fef3e2; color: #e67e22; }
+.level-hinweis { background: #fefce8; color: #d97706; }
+.level-info { background: #e8f4fd; color: #2980b9; }
+.warning-card-arrow { color: var(--text-muted); font-size: 18px; align-self: center; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.empty-icon { font-size: 40px; margin-bottom: 10px; color: var(--accent-green); }
+
+/* ===== DETAIL VIEW ===== */
+.detail-map-mini { height: 220px; background: linear-gradient(135deg, #c8dba0 0%, #b8d090 100%); position: relative; overflow: hidden; flex-shrink: 0; }
+.detail-map-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.detail-warning-circle { width: 180px; height: 180px; border-radius: 50%; opacity: 0.55; }
+.detail-content { background: white; padding: 0; }
+.detail-section { padding: 16px; border-bottom: 1px solid var(--border); }
+.detail-timestamp { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+.detail-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 12px; line-height: 1.2; }
+.detail-level-row { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.detail-level-label { font-size: 13px; color: var(--text-muted); }
+.detail-level-badge { font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+.detail-description { font-size: 15px; color: var(--text); line-height: 1.6; }
+.detail-block-title { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; margin-bottom: 12px; color: var(--primary); }
+.detail-block-icon { font-size: 20px; }
+.recommendation-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.5; }
+.recommendation-item:last-child { border-bottom: none; }
+.rec-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.region-tag { display: inline-block; background: #e8f0fe; color: var(--primary); font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 20px; margin: 3px 3px 3px 0; }
+.issuer-info { font-size: 14px; color: var(--text-muted); }
+.emergency-numbers { display: flex; gap: 10px; flex-wrap: wrap; }
+.emergency-btn { flex: 1; min-width: 120px; background: var(--accent-red); color: white; border: none; border-radius: 10px; padding: 14px 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 700; }
+.emergency-btn span { display: block; font-size: 22px; font-weight: 900; }
+
+/* ===== THEMES ===== */
+.themes-list { padding: 8px 0; background: white; }
+.theme-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.theme-item:hover { background: #f8f9fa; }
+.theme-icon { font-size: 26px; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; background: #f0f2f5; border-radius: 12px; flex-shrink: 0; }
+.theme-info { flex: 1; }
+.theme-name { display: block; font-size: 15px; font-weight: 700; }
+.theme-desc { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== SETTINGS ===== */
+.settings-list { background: white; }
+.settings-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: 14px 16px 6px; background: var(--bg); }
+.settings-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 15px; }
+.settings-item.clickable { cursor: pointer; color: var(--primary); font-weight: 600; }
+.settings-value { font-size: 14px; color: var(--text-muted); }
+.toggle { position: relative; width: 50px; height: 28px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: #ccc; border-radius: 28px; transition: 0.3s; cursor: pointer; }
+.slider::before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+input:checked + .slider { background: var(--primary); }
+input:checked + .slider::before { transform: translateX(22px); }
+
+/* ===== MORE ===== */
+.more-list { background: white; }
+.more-item { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer; gap: 12px; }
+.more-item:hover { background: #f8f9fa; }
+.more-icon { font-size: 22px; width: 40px; text-align: center; }
+.more-arrow { margin-left: auto; color: var(--text-muted); font-size: 20px; }
+
+/* ===== TAB BAR ===== */
+.tabbar { height: calc(var(--tabbar-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: white; border-top: 1px solid var(--border); display: flex; flex-shrink: 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.06); }
+.tab { flex: 1; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--text-muted); font-size: 11px; font-weight: 600; transition: color 0.2s; padding-top: 6px; }
+.tab.active { color: var(--primary); }
+.tab-icon { font-size: 22px; line-height: 1; }
+
+/* ===== ADMIN ===== */
+.admin-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.admin-tabs { display: flex; background: white; border-bottom: 2px solid var(--border); flex-shrink: 0; }
+.admin-tab { flex: 1; padding: 12px; background: none; border: none; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.admin-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.admin-panel { display: none; flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: touch; }
+.admin-panel.active { display: block; }
+.admin-list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.admin-warning-item { background: white; border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); border-left: 4px solid var(--accent-orange); }
+.admin-warning-item.level-extrem, .admin-warning-item.level-schwer { border-left-color: var(--accent-red); }
+.admin-warning-item.level-hinweis { border-left-color: var(--accent-yellow); }
+.admin-warning-item.level-info { border-left-color: #3498db; }
+.admin-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.admin-item-title { font-size: 14px; font-weight: 700; flex: 1; }
+.admin-item-actions { display: flex; gap: 6px; }
+.btn-edit { background: var(--primary); color: white; border: none; border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+.btn-delete { background: var(--accent-red); color: white; border: none; border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+.admin-item-meta { font-size: 12px; color: var(--text-muted); }
+.admin-user-item { background: white; border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; }
+.user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+.user-info { flex: 1; }
+.user-name { font-size: 14px; font-weight: 700; }
+.user-role { font-size: 12px; color: var(--text-muted); }
+.user-status-badge { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
+.status-active { background: #d1fae5; color: #065f46; }
+.status-blocked { background: #fee2e2; color: #991b1b; }
+.admin-form { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.admin-form h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--primary); }
+
+/* ===== MODAL ===== */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: flex-end; justify-content: center; padding: 0; }
+.modal-overlay.active { display: flex; }
+.modal { background: white; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 16px 14px; border-bottom: 1px solid var(--border); font-size: 17px; font-weight: 700; position: sticky; top: 0; background: white; z-index: 1; border-radius: 20px 20px 0 0; }
+.modal-header button { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.modal-header button:hover { background: var(--bg); }
+.modal-body { padding: 16px; }
+
+/* ===== TOAST ===== */
+.toast { position: fixed; bottom: calc(var(--tabbar-h) + 20px); left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(30,30,30,0.92); color: white; padding: 12px 20px; border-radius: 24px; font-size: 14px; font-weight: 600; pointer-events: none; opacity: 0; transition: all 0.3s; z-index: 2000; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== TIPS PAGE ===== */
+.tips-content { padding: 16px; }
+.tip-block { background: white; border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.tip-block h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.tip-block p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+/* ===== PUSH BANNER ===== */
+.push-banner { position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(-100%); width: 100%; max-width: 480px; background: var(--primary); color: white; padding: 14px 16px; z-index: 3000; transition: transform 0.4s cubic-bezier(.22,.61,.36,1); box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-radius: 0 0 16px 16px; }
+.push-banner.show { transform: translateX(-50%) translateY(0); }
+.push-banner-title { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+.push-banner-body { font-size: 13px; opacity: 0.9; }
+.push-banner-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ===== SEVERITY COLORS ===== */
+.sev-extrem { background-color: #c0392b !important; }
+.sev-schwer { background-color: #e74c3c !important; }
+.sev-warnung { background-color: #e67e22 !important; }
+.sev-hinweis { background-color: #f1c40f !important; }
+.sev-info { background-color: #3498db !important; }
+
+.sev-extrem-bg { background: #fde8e8; }
+.sev-warnung-bg { background: #fef3e2; }
+.sev-hinweis-bg { background: #fefce8; }
+.sev-info-bg { background: #e8f4fd; }
+
+/* ===== RESPONSIVE ===== */
+@media (min-width: 481px) {
+  body { background: #2d3748; }
+  #app { border-radius: 0; box-shadow: 0 0 60px rgba(0,0,0,0.5); }
+}
+</style>
+</head>
+<body>
+  <div id="app">
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active">
+      <div class="login-container">
+        <div class="login-logo">
+          <div class="logo-icon">⚠</div>
+          <h1>WARNA</h1>
+          <p>Warn- und Informations-App</p>
+        </div>
+        <div class="login-form">
+          <h2>Admin-Anmeldung</h2>
+          <div class="input-group">
+            <label>Benutzername</label>
+            <input type="text" id="login-username" placeholder="Benutzername">
+          </div>
+          <div class="input-group">
+            <label>Passwort</label>
+            <input type="password" id="login-password" placeholder="Passwort">
+          </div>
+          <div id="login-error" class="error-msg" style="display:none">Ungültige Anmeldedaten</div>
+          <button class="btn-primary" onclick="doLogin()">Anmelden</button>
+          <button class="btn-text" onclick="showPublicApp()">Als Besucher fortfahren →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Public App -->
+    <div id="public-screen" class="screen">
+      <!-- Top Nav -->
+      <div class="topbar">
+        <button class="back-btn" id="public-back-btn" style="display:none" onclick="goBack()">‹</button>
+        <span class="topbar-title" id="public-title">Karte</span>
+        <button class="topbar-action" onclick="showAdminLogin()">🔐</button>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="main-content" id="public-main">
+
+        <!-- Map View -->
+        <div id="view-map" class="view active">
+          <div class="map-placeholder" id="main-map">
+            <div class="map-bg"></div>
+            <div class="map-germany">
+              <svg viewBox="0 0 400 500" class="germany-svg" id="germany-map-svg">
+                <!-- Germany outline simplified -->
+                <path class="land" d="M180,20 L220,25 L255,35 L280,50 L290,80 L310,95 L320,115 L315,140 L330,160 L340,185 L335,210 L350,230 L345,260 L330,280 L315,295 L300,310 L280,325 L260,340 L240,355 L220,365 L195,370 L175,360 L155,350 L130,340 L110,325 L95,310 L85,295 L75,275 L70,255 L80,235 L70,215 L75,190 L85,170 L90,145 L80,120 L90,100 L105,85 L120,70 L140,55 L160,35 Z" />
+                <!-- State borders simplified -->
+                <line x1="120" y1="180" x2="200" y2="175" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+                <line x1="200" y1="175" x2="280" y2="185" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+                <line x1="150" y1="240" x2="250" y2="235" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+                <line x1="200" y1="175" x2="210" y2="280" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+              </svg>
+              <div class="map-warnings-overlay" id="map-warnings-overlay"></div>
+            </div>
+            <div class="map-legend">
+              <div class="legend-item"><span class="dot red"></span>Gefahr</div>
+              <div class="legend-item"><span class="dot orange"></span>Warnung</div>
+              <div class="legend-item"><span class="dot yellow"></span>Hinweis</div>
+            </div>
+          </div>
+
+          <!-- Active Warnings List -->
+          <div class="warnings-section">
+            <div class="section-header">
+              <span>Aktuelle Warnungen</span>
+              <span class="badge" id="warning-count">0</span>
+            </div>
+            <div id="warnings-list" class="warnings-list">
+              <div class="empty-state">
+                <div class="empty-icon">✓</div>
+                <p>Keine aktiven Warnungen</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning Detail View -->
+        <div id="view-detail" class="view">
+          <div id="detail-map" class="detail-map-mini">
+            <div class="detail-map-overlay" id="detail-map-overlay"></div>
+          </div>
+          <div class="detail-content" id="detail-content"></div>
+        </div>
+
+        <!-- Themes View -->
+        <div id="view-themes" class="view">
+          <div class="themes-list">
+            <div class="theme-item" onclick="filterCategory('all')">
+              <div class="theme-icon">🗺</div>
+              <div class="theme-info">
+                <span class="theme-name">Alle Warnungen</span>
+                <span class="theme-desc">Komplette Übersicht aller Kategorien</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('feuer')">
+              <div class="theme-icon">🔥</div>
+              <div class="theme-info">
+                <span class="theme-name">Feuer & Brand</span>
+                <span class="theme-desc">Waldbrände, Gebäudebrände, Rauchentwicklung</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('unwetter')">
+              <div class="theme-icon">⛈</div>
+              <div class="theme-info">
+                <span class="theme-name">Unwetter</span>
+                <span class="theme-desc">Sturm, Gewitter, Hagel, Starkregen</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('hochwasser')">
+              <div class="theme-icon">🌊</div>
+              <div class="theme-info">
+                <span class="theme-name">Hochwasser</span>
+                <span class="theme-desc">Überschwemmung, Hochwassergefahr</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('schnee')">
+              <div class="theme-icon">❄</div>
+              <div class="theme-info">
+                <span class="theme-name">Schnee & Eis</span>
+                <span class="theme-desc">Glätte, Schneefall, Frost</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('hitze')">
+              <div class="theme-icon">☀</div>
+              <div class="theme-info">
+                <span class="theme-name">Hitze</span>
+                <span class="theme-desc">Hitzewellen, UV-Strahlung</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('cbrn')">
+              <div class="theme-icon">☢</div>
+              <div class="theme-info">
+                <span class="theme-name">CBRN</span>
+                <span class="theme-desc">Chemische, biologische, nukleare Gefahren</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('katastrophe')">
+              <div class="theme-icon">🚨</div>
+              <div class="theme-info">
+                <span class="theme-name">Katastrophenschutz</span>
+                <span class="theme-desc">Stromausfall, Infrastruktur, Evakuierung</span>
+              </div>
+            </div>
+            <div class="theme-item" onclick="filterCategory('gesundheit')">
+              <div class="theme-icon">🏥</div>
+              <div class="theme-info">
+                <span class="theme-name">Gesundheit</span>
+                <span class="theme-desc">Epidemien, Seuchenwarnungen</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="view-settings" class="view">
+          <div class="settings-list">
+            <div class="settings-section-title">Benachrichtigungen</div>
+            <div class="settings-item">
+              <span>Push-Benachrichtigungen</span>
+              <label class="toggle"><input type="checkbox" id="toggle-push" checked onchange="togglePush()"><span class="slider"></span></label>
+            </div>
+            <div class="settings-item">
+              <span>Mein Standort</span>
+              <label class="toggle"><input type="checkbox" id="toggle-location" onchange="toggleLocation()"><span class="slider"></span></label>
+            </div>
+            <div class="settings-section-title">Meine Orte</div>
+            <div id="saved-places-list"></div>
+            <div class="settings-item clickable" onclick="showAddPlace()">
+              <span>+ Ort hinzufügen</span>
+            </div>
+            <div class="settings-section-title">Über die App</div>
+            <div class="settings-item">
+              <span>Version</span>
+              <span class="settings-value">1.0.0</span>
+            </div>
+            <div class="settings-item">
+              <span>Herausgeber</span>
+              <span class="settings-value">Admin</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- More View -->
+        <div id="view-more" class="view">
+          <div class="more-list">
+            <div class="more-item" onclick="showTips()">
+              <span class="more-icon">💡</span>
+              <span>Notfalltipps</span>
+              <span class="more-arrow">›</span>
+            </div>
+            <div class="more-item" onclick="showEmergency()">
+              <span class="more-icon">📞</span>
+              <span>Notrufnummern</span>
+              <span class="more-arrow">›</span>
+            </div>
+            <div class="more-item" onclick="showAbout()">
+              <span class="more-icon">ℹ</span>
+              <span>Impressum</span>
+              <span class="more-arrow">›</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Tab Bar -->
+      <div class="tabbar">
+        <button class="tab active" id="tab-map" onclick="switchTab('map')">
+          <div class="tab-icon">🗺</div>
+          <span>Karte</span>
+        </button>
+        <button class="tab" id="tab-themes" onclick="switchTab('themes')">
+          <div class="tab-icon">≡</div>
+          <span>Themen</span>
+        </button>
+        <button class="tab" id="tab-settings" onclick="switchTab('settings')">
+          <div class="tab-icon">⚙</div>
+          <span>Einstellungen</span>
+        </button>
+        <button class="tab" id="tab-more" onclick="switchTab('more')">
+          <div class="tab-icon">···</div>
+          <span>Mehr</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Admin Screen -->
+    <div id="admin-screen" class="screen">
+      <div class="topbar admin-topbar">
+        <span class="topbar-title">Admin-Bereich</span>
+        <button class="topbar-action" onclick="adminLogout()">Abmelden</button>
+      </div>
+      <div class="admin-content">
+        <!-- Admin Tabs -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" onclick="switchAdminTab('warnings')">Warnungen</button>
+          <button class="admin-tab" onclick="switchAdminTab('users')">Benutzer</button>
+          <button class="admin-tab" onclick="switchAdminTab('push')">Push</button>
+        </div>
+
+        <!-- Admin: Warnings Management -->
+        <div id="admin-warnings" class="admin-panel active">
+          <button class="btn-primary" onclick="showCreateWarning()">+ Neue Warnung erstellen</button>
+          <div id="admin-warnings-list" class="admin-list"></div>
+        </div>
+
+        <!-- Admin: User Management -->
+        <div id="admin-users" class="admin-panel">
+          <button class="btn-primary" onclick="showCreateUser()">+ Benutzer erstellen</button>
+          <div id="admin-users-list" class="admin-list"></div>
+        </div>
+
+        <!-- Admin: Push Notifications -->
+        <div id="admin-push" class="admin-panel">
+          <div class="admin-form">
+            <h3>Push-Benachrichtigung senden</h3>
+            <div class="input-group">
+              <label>Titel</label>
+              <input type="text" id="push-title" placeholder="Nachrichtentitel">
+            </div>
+            <div class="input-group">
+              <label>Nachricht</label>
+              <textarea id="push-message" placeholder="Nachrichtentext" rows="4"></textarea>
+            </div>
+            <div class="input-group">
+              <label>Region / Ort</label>
+              <input type="text" id="push-region" placeholder="z.B. Berlin, Bayern, Deutschland">
+            </div>
+            <button class="btn-primary" onclick="sendPushNotification()">Senden</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span id="modal-title">Modal</span>
+          <button onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script>// ===== WARNAPP DATA =====
+
+const CATEGORIES = {
+  feuer: {
+    label: 'Feuer & Brand',
+    icon: '🔥',
+    recommendations: [
+      { icon: '🚫', text: 'Meiden Sie das betroffene Gebiet.' },
+      { icon: '🏃', text: 'Verlassen Sie sofort das betroffene Gebiet.' },
+      { icon: '🪟', text: 'Schließen Sie Fenster und Türen.' },
+      { icon: '📻', text: 'Informieren Sie sich im Lokalradio oder auf offiziellen Webseiten.' },
+      { icon: '👮', text: 'Folgen Sie den Anweisungen der Einsatzkräfte.' },
+      { icon: '📞', text: 'Rufen Sie nur im Notfall 110 (Polizei) oder 112 (Feuerwehr).' },
+      { icon: '😷', text: 'Halten Sie sich bei Rauchentwicklung in Innenräumen auf. Dichten Sie Fugen mit feuchten Tüchern ab.' },
+    ]
+  },
+  unwetter: {
+    label: 'Unwetter',
+    icon: '⛈',
+    recommendations: [
+      { icon: '🏠', text: 'Suchen Sie ein stabiles Gebäude auf. Vermeiden Sie Aufenthalte im Freien.' },
+      { icon: '🚗', text: 'Stellen Sie Ihr Fahrzeug sicher ab und vermeiden Sie Fahrten bei extremem Unwetter.' },
+      { icon: '🌳', text: 'Meiden Sie Bäume, offene Flächen und erhöhte Standorte.' },
+      { icon: '⚡', text: 'Trennen Sie empfindliche Elektrogeräte vom Strom.' },
+      { icon: '📻', text: 'Verfolgen Sie aktuelle Meldungen im Radio oder über offizielle Apps.' },
+      { icon: '👮', text: 'Folgen Sie den Anweisungen der Behörden.' },
+      { icon: '📞', text: 'Rufen Sie nur im Notfall 110 (Polizei) oder 112 (Feuerwehr).' },
+    ]
+  },
+  hochwasser: {
+    label: 'Hochwasser',
+    icon: '🌊',
+    recommendations: [
+      { icon: '🚫', text: 'Meiden Sie Gewässer, Brücken und überschwemmte Gebiete.' },
+      { icon: '🏃', text: 'Verlassen Sie tiefgelegene Gebiete und Keller sofort.' },
+      { icon: '🔌', text: 'Schalten Sie elektrische Geräte ab und trennen Sie sie vom Netz.' },
+      { icon: '📦', text: 'Bringen Sie Wertsachen, wichtige Dokumente und gefährliche Stoffe in Sicherheit.' },
+      { icon: '🚗', text: 'Bewegen Sie Fahrzeuge auf höher gelegene Parkflächen.' },
+      { icon: '📻', text: 'Informieren Sie sich über aktuelle Pegelstände und Lageberichte.' },
+      { icon: '📞', text: 'Rufen Sie nur im Notfall 110 (Polizei) oder 112 (Feuerwehr).' },
+    ]
+  },
+  schnee: {
+    label: 'Schnee & Eis',
+    icon: '❄',
+    recommendations: [
+      { icon: '🚗', text: 'Verzichten Sie auf unnötige Fahrten. Fahren Sie bei Eis und Schnee langsam und mit Abstand.' },
+      { icon: '❄', text: 'Räumen Sie Gehwege und Eingänge zeitnah.' },
+      { icon: '🏠', text: 'Bleiben Sie wenn möglich zu Hause.' },
+      { icon: '🧥', text: 'Tragen Sie warme und winddichte Kleidung.' },
+      { icon: '📻', text: 'Informieren Sie sich über aktuelle Verkehrs- und Wettermeldungen.' },
+      { icon: '📞', text: 'Rufen Sie nur im Notfall 110 (Polizei) oder 112 (Feuerwehr).' },
+    ]
+  },
+  hitze: {
+    label: 'Hitze',
+    icon: '☀',
+    recommendations: [
+      { icon: '💧', text: 'Trinken Sie ausreichend Wasser – mindestens 2–3 Liter pro Tag.' },
+      { icon: '🌡', text: 'Halten Sie sich tagsüber in kühlen oder klimatisierten Räumen auf.' },
+      { icon: '🌿', text: 'Halten Sie Räume durch Abdunkeln und richtiges Lüften kühl.' },
+      { icon: '👴', text: 'Kümmern Sie sich um ältere Menschen und Kinder in Ihrer Umgebung.' },
+      { icon: '🏃', text: 'Meiden Sie körperliche Anstrengung während der heißen Mittagszeit.' },
+      { icon: '☀', text: 'Schützen Sie sich vor Sonneneinstrahlung mit Sonnencreme, Kopfbedeckung und Kleidung.' },
+      { icon: '🐕', text: 'Lassen Sie Tiere niemals in geschlossenen Fahrzeugen zurück.' },
+    ]
+  },
+  cbrn: {
+    label: 'CBRN',
+    icon: '☢',
+    recommendations: [
+      { icon: '🏠', text: 'Bleiben Sie in Innenräumen. Verlassen Sie das Gebäude nur auf Anweisung der Behörden.' },
+      { icon: '🪟', text: 'Schließen Sie alle Fenster, Türen und Lüftungsöffnungen. Dichten Sie Fugen mit feuchten Tüchern ab.' },
+      { icon: '😷', text: 'Tragen Sie bei Exposition einen geeigneten Atemschutz.' },
+      { icon: '📻', text: 'Hören Sie Radio und folgen Sie den offiziellen Anweisungen.' },
+      { icon: '🚫', text: 'Verzehren Sie keine selbst angebauten Lebensmittel aus dem betroffenen Gebiet.' },
+      { icon: '👮', text: 'Folgen Sie ausschließlich den Anweisungen der Behörden und Einsatzkräfte.' },
+      { icon: '📞', text: 'Rufen Sie nur im Notfall 110 (Polizei) oder 112 (Feuerwehr).' },
+    ]
+  },
+  katastrophe: {
+    label: 'Katastrophenschutz',
+    icon: '🚨',
+    recommendations: [
+      { icon: '🔦', text: 'Halten Sie Taschenlampen, Batterieradio und Notstromversorgung bereit.' },
+      { icon: '💊', text: 'Stellen Sie sicher, dass benötigte Medikamente ausreichend vorrätig sind.' },
+      { icon: '💧', text: 'Legen Sie Trinkwasservorräte für mindestens 3 Tage an.' },
+      { icon: '📦', text: 'Halten Sie einen Notvorrat an Lebensmitteln und wichtigen Dokumenten bereit.' },
+      { icon: '📻', text: 'Nutzen Sie Batterieradio für aktuelle Informationen bei Stromausfall.' },
+      { icon: '📞', text: 'Rufen Sie nur im Notfall 110 (Polizei) oder 112 (Feuerwehr).' },
+      { icon: '👮', text: 'Folgen Sie den Anweisungen der Behörden und Einsatzkräfte.' },
+    ]
+  },
+  gesundheit: {
+    label: 'Gesundheit',
+    icon: '🏥',
+    recommendations: [
+      { icon: '🤧', text: 'Waschen Sie sich regelmäßig und gründlich die Hände.' },
+      { icon: '😷', text: 'Tragen Sie in öffentlichen Bereichen einen Mund-Nase-Schutz.' },
+      { icon: '🏠', text: 'Bleiben Sie bei Krankheitssymptomen zu Hause und kontaktieren Sie Ihren Arzt.' },
+      { icon: '📞', text: 'Kontaktieren Sie bei Verdacht den ärztlichen Bereitschaftsdienst: 116 117.' },
+      { icon: '🚫', text: 'Meiden Sie enge Menschenansammlungen und halten Sie Abstand.' },
+      { icon: '💉', text: 'Informieren Sie sich über empfohlene Schutzimpfungen.' },
+      { icon: '📻', text: 'Folgen Sie den Empfehlungen der Gesundheitsbehörden.' },
+    ]
+  },
+};
+
+const SEVERITY_LEVELS = [
+  { key: 'extrem', label: 'Extreme Gefahr', color: '#c0392b', textClass: 'level-extrem' },
+  { key: 'schwer', label: 'Schwere Gefahr', color: '#e74c3c', textClass: 'level-schwer' },
+  { key: 'warnung', label: 'Warnung', color: '#e67e22', textClass: 'level-warnung' },
+  { key: 'hinweis', label: 'Gefahreninformation', color: '#f1c40f', textClass: 'level-hinweis' },
+  { key: 'info', label: 'Vorabinformation', color: '#3498db', textClass: 'level-info' },
+];
+
+const GERMAN_REGIONS = [
+  'Deutschland', 'Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg',
+  'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen',
+  'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland', 'Sachsen',
+  'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thüringen',
+  'Aachen', 'Augsburg', 'Bielefeld', 'Bochum', 'Bonn', 'Braunschweig',
+  'Chemnitz', 'Dortmund', 'Dresden', 'Duisburg', 'Düsseldorf',
+  'Erfurt', 'Essen', 'Frankfurt am Main', 'Freiburg im Breisgau',
+  'Gelsenkirchen', 'Göttingen', 'Halle (Saale)', 'Hamburg', 'Hannover',
+  'Heidelberg', 'Karlsruhe', 'Kiel', 'Koblenz', 'Köln', 'Leipzig',
+  'Lübeck', 'Magdeburg', 'Mainz', 'Mannheim', 'Mönchengladbach',
+  'München', 'Münster', 'Neustrelitz', 'Nürnberg', 'Oberhausen',
+  'Oldenburg', 'Osnabrück', 'Paderborn', 'Potsdam', 'Rostock',
+  'Saarbrücken', 'Schwerin', 'Stuttgart', 'Ulm', 'Wiesbaden', 'Wuppertal',
+  'Würzburg', 'Müritz-Nationalpark', 'Landkreis Mecklenburgische Seenplatte',
+];
+
+// ===== APP STATE =====
+let appState = {
+  warnings: JSON.parse(localStorage.getItem('warna_warnings') || '[]'),
+  users: JSON.parse(localStorage.getItem('warna_users') || JSON.stringify([
+    { id: 'admin', username: '112', role: 'admin', status: 'active', created: new Date().toISOString() }
+  ])),
+  isAdmin: false,
+  currentView: 'map',
+  currentWarning: null,
+  viewHistory: [],
+  filterCategory: 'all',
+  pushSubscribers: [],
+};
+
+function saveState() {
+  localStorage.setItem('warna_warnings', JSON.stringify(appState.warnings));
+  localStorage.setItem('warna_users', JSON.stringify(appState.users));
+}
+</script>
+  <script>// ===== WARNA APP LOGIC =====
+
+// ===== AUTH =====
+function doLogin() {
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value;
+  if (u === '112' && p === 'Noah-112-DWD') {
+    appState.isAdmin = true;
+    showScreen('admin-screen');
+    renderAdminWarnings();
+    renderAdminUsers();
+    showToast('Willkommen, Admin!');
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function showAdminLogin() {
+  showScreen('login-screen');
+}
+
+function adminLogout() {
+  appState.isAdmin = false;
+  showScreen('public-screen');
+  showToast('Abgemeldet.');
+}
+
+function showPublicApp() {
+  showScreen('public-screen');
+  renderWarnings();
+}
+
+// ===== SCREENS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('view-' + tab).classList.add('active');
+  document.getElementById('public-title').textContent = tabTitles[tab] || 'WARNA';
+  document.getElementById('public-back-btn').style.display = 'none';
+  appState.currentView = tab;
+  if (tab === 'map') renderWarnings();
+}
+
+const tabTitles = { map: 'Karte', themes: 'Themen', settings: 'Einstellungen', more: 'Mehr' };
+
+// ===== BACK NAV =====
+function goBack() {
+  if (appState.viewHistory.length > 0) {
+    const prev = appState.viewHistory.pop();
+    showPublicView(prev.view, prev.title, false);
+    if (appState.viewHistory.length === 0) document.getElementById('public-back-btn').style.display = 'none';
+  }
+}
+
+function showPublicView(view, title, pushHistory = true) {
+  if (pushHistory) {
+    const currentView = document.querySelector('.view.active');
+    if (currentView) appState.viewHistory.push({ view: currentView.id.replace('view-', ''), title: document.getElementById('public-title').textContent });
+  }
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.getElementById('public-title').textContent = title;
+  document.getElementById('public-back-btn').style.display = 'flex';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+}
+
+// ===== RENDER WARNINGS (PUBLIC) =====
+function renderWarnings() {
+  const list = document.getElementById('warnings-list');
+  const badge = document.getElementById('warning-count');
+  const active = appState.warnings.filter(w => w.active && (appState.filterCategory === 'all' || w.category === appState.filterCategory));
+  badge.textContent = active.length;
+  renderMapWarnings(active);
+
+  if (active.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">✓</div><p>Keine aktiven Warnungen</p></div>`;
+    return;
+  }
+
+  list.innerHTML = active.map(w => {
+    const cat = CATEGORIES[w.category] || { icon: '⚠', label: w.category };
+    const sev = SEVERITY_LEVELS.find(s => s.key === w.severity) || SEVERITY_LEVELS[2];
+    const date = new Date(w.created).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="warning-card" onclick="showWarningDetail('${w.id}')">
+        <div class="warning-card-icon" style="background:${sev.color}22">${cat.icon}</div>
+        <div class="warning-card-body">
+          <div class="warning-card-title">${escHtml(w.title)}</div>
+          <div class="warning-card-meta">
+            <span class="warning-card-region">${escHtml(w.region)}</span>
+            <span class="warning-level-tag ${sev.textClass}">${sev.label}</span>
+          </div>
+          <div class="warning-card-time">${date}</div>
+        </div>
+        <div class="warning-card-arrow">›</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderMapWarnings(warnings) {
+  const overlay = document.getElementById('map-warnings-overlay');
+  if (!overlay) return;
+  overlay.innerHTML = warnings.slice(0, 5).map((w, i) => {
+    const sev = SEVERITY_LEVELS.find(s => s.key === w.severity) || SEVERITY_LEVELS[2];
+    const positions = [[30, 30], [55, 20], [65, 55], [25, 60], [45, 40]];
+    const [left, top] = positions[i] || [40, 40];
+    const size = w.severity === 'extrem' ? 120 : w.severity === 'schwer' ? 100 : 80;
+    return `<div class="map-warning-circle" style="left:${left}%;top:${top}%;width:${size}px;height:${size}px;transform:translate(-50%,-50%);background:${sev.color}"></div>`;
+  }).join('');
+}
+
+// ===== WARNING DETAIL =====
+function showWarningDetail(id) {
+  const w = appState.warnings.find(x => x.id === id);
+  if (!w) return;
+  const cat = CATEGORIES[w.category] || { icon: '⚠', label: w.category, recommendations: [] };
+  const sev = SEVERITY_LEVELS.find(s => s.key === w.severity) || SEVERITY_LEVELS[2];
+  const date = new Date(w.created).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  // Detail map
+  document.getElementById('detail-map').style.background = `linear-gradient(135deg, #c8dba0, #b8d090)`;
+  document.getElementById('detail-map-overlay').innerHTML = `
+    <div class="detail-warning-circle" style="background:${sev.color}"></div>
+  `;
+
+  // Detail content
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-timestamp">Aktualisierung ${date}</div>
+      <div class="detail-title">${escHtml(w.title)}</div>
+      <div class="detail-level-row">
+        <div class="warning-card-icon" style="background:none;padding:0;font-size:26px">${cat.icon}</div>
+        <span class="detail-level-label">Warnstufe</span>
+        <span class="detail-level-badge level-${w.severity}" style="background:${sev.color}22;color:${sev.color}">${sev.label}</span>
+      </div>
+    </div>
+    <div class="detail-section">
+      <p class="detail-description">${escHtml(w.description)}</p>
+    </div>
+    <div class="detail-section">
+      <div class="detail-block-title">
+        <span class="detail-block-icon">👤</span>
+        Handlungsempfehlung:
+      </div>
+      ${cat.recommendations.map(r => `
+        <div class="recommendation-item">
+          <span class="rec-icon">${r.icon}</span>
+          <span>${escHtml(r.text)}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-block-title">
+        <span class="detail-block-icon">📍</span>
+        Betroffene Regionen:
+      </div>
+      ${escHtml(w.region).split(',').map(r => `<span class="region-tag">${r.trim()}</span>`).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-block-title">
+        <span class="detail-block-icon">🏷</span>
+        Allgemeine Notfalltipps:
+      </div>
+      <p class="detail-description" style="font-size:14px">Unter den Notfalltipps des Bundesamts für Bevölkerungsschutz und Katastrophenhilfe (BBK) erfahren Sie mehr zu Verhaltensweisen bei besonderen Gefahrenlagen.</p>
+    </div>
+    <div class="detail-section">
+      <div class="detail-block-title">
+        <span class="detail-block-icon">🏢</span>
+        Herausgegeben von:
+      </div>
+      <p class="issuer-info">${escHtml(w.issuer || 'Admin – Integrierte Leitstelle')}</p>
+    </div>
+    <div class="detail-section">
+      <div class="detail-block-title">
+        <span class="detail-block-icon">📞</span>
+        Notrufnummern:
+      </div>
+      <div class="emergency-numbers">
+        <button class="emergency-btn" onclick="callNumber(112)"><span>112</span>Feuerwehr</button>
+        <button class="emergency-btn" onclick="callNumber(110)"><span>110</span>Polizei</button>
+        <button class="emergency-btn" onclick="callNumber('116117')"><span>116117</span>Ärztl. Bereitschaft</button>
+      </div>
+    </div>
+  `;
+
+  showPublicView('detail', w.title);
+}
+
+function callNumber(num) {
+  window.location.href = 'tel:' + num;
+}
+
+// ===== FILTER =====
+function filterCategory(cat) {
+  appState.filterCategory = cat;
+  switchTab('map');
+}
+
+// ===== ADMIN: WARNINGS =====
+function renderAdminWarnings() {
+  const list = document.getElementById('admin-warnings-list');
+  if (!list) return;
+  if (appState.warnings.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Keine Warnungen vorhanden</p></div>';
+    return;
+  }
+  list.innerHTML = appState.warnings.map(w => {
+    const cat = CATEGORIES[w.category] || { icon: '⚠' };
+    const sev = SEVERITY_LEVELS.find(s => s.key === w.severity) || SEVERITY_LEVELS[2];
+    const date = new Date(w.created).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="admin-warning-item level-${w.severity}">
+        <div class="admin-item-header">
+          <div class="admin-item-title">${cat.icon} ${escHtml(w.title)}</div>
+          <div class="admin-item-actions">
+            <button class="btn-edit" onclick="editWarning('${w.id}')">✏ Bearbeiten</button>
+            <button class="btn-delete" onclick="deleteWarning('${w.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="admin-item-meta">
+          ${sev.label} · ${escHtml(w.region)} · ${date} · ${w.active ? '🟢 Aktiv' : '⚫ Inaktiv'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showCreateWarning(existingId) {
+  const existing = existingId ? appState.warnings.find(w => w.id === existingId) : null;
+  document.getElementById('modal-title').textContent = existing ? 'Warnung bearbeiten' : 'Neue Warnung';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="admin-form">
+      <div class="input-group">
+        <label>Titel der Warnung</label>
+        <input type="text" id="w-title" placeholder="z.B. Rauchentwicklung – Neustrelitz" value="${existing ? escHtml(existing.title) : ''}">
+      </div>
+      <div class="input-group">
+        <label>Kategorie</label>
+        <select id="w-category">
+          ${Object.entries(CATEGORIES).map(([k, v]) => `<option value="${k}" ${existing && existing.category === k ? 'selected' : ''}>${v.icon} ${v.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Warnstufe</label>
+        <select id="w-severity">
+          ${SEVERITY_LEVELS.map(s => `<option value="${s.key}" ${existing && existing.severity === s.key ? 'selected' : ''}>${s.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Region / Ort</label>
+        <input type="text" id="w-region" placeholder="z.B. Neustrelitz, Mecklenburg" value="${existing ? escHtml(existing.region) : ''}">
+        <div style="margin-top:6px;font-size:12px;color:#888">Oder auswählen:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;max-height:100px;overflow-y:auto">
+          ${GERMAN_REGIONS.map(r => `<span onclick="addRegionToInput('${r}')" style="cursor:pointer;background:#e8f0fe;color:#1a3a6b;font-size:11px;padding:3px 8px;border-radius:10px">${r}</span>`).join('')}
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Beschreibung</label>
+        <textarea id="w-desc" rows="3" placeholder="Beschreibung der Gefahrenlage...">${existing ? escHtml(existing.description) : ''}</textarea>
+      </div>
+      <div class="input-group">
+        <label>Herausgeber</label>
+        <input type="text" id="w-issuer" placeholder="Leitstelle / Behörde" value="${existing ? escHtml(existing.issuer || 'Admin') : 'Admin'}">
+      </div>
+      <div class="input-group" style="display:flex;align-items:center;gap:10px">
+        <label style="margin:0">Aktiv</label>
+        <label class="toggle"><input type="checkbox" id="w-active" ${!existing || existing.active ? 'checked' : ''}><span class="slider"></span></label>
+      </div>
+      <button class="btn-primary" onclick="${existing ? `saveWarning('${existingId}')` : 'createWarning()'}">
+        ${existing ? 'Speichern' : 'Warnung erstellen'}
+      </button>
+      ${existing ? `<button class="btn-secondary" onclick="closeModal()">Abbrechen</button>` : ''}
+    </div>
+  `;
+  openModal();
+}
+
+function addRegionToInput(region) {
+  const inp = document.getElementById('w-region');
+  if (inp.value && !inp.value.includes(region)) inp.value += ', ' + region;
+  else if (!inp.value) inp.value = region;
+}
+
+function createWarning() {
+  const title = document.getElementById('w-title').value.trim();
+  const category = document.getElementById('w-category').value;
+  const severity = document.getElementById('w-severity').value;
+  const region = document.getElementById('w-region').value.trim();
+  const description = document.getElementById('w-desc').value.trim();
+  const issuer = document.getElementById('w-issuer').value.trim();
+  const active = document.getElementById('w-active').checked;
+  if (!title || !region || !description) { showToast('Bitte alle Pflichtfelder ausfüllen'); return; }
+  const w = { id: 'w_' + Date.now(), title, category, severity, region, description, issuer, active, created: new Date().toISOString() };
+  appState.warnings.unshift(w);
+  saveState();
+  closeModal();
+  renderAdminWarnings();
+  renderWarnings();
+  showToast('✅ Warnung erstellt!');
+  if (active) triggerPushBanner(title, region, category);
+}
+
+function saveWarning(id) {
+  const idx = appState.warnings.findIndex(w => w.id === id);
+  if (idx === -1) return;
+  appState.warnings[idx] = {
+    ...appState.warnings[idx],
+    title: document.getElementById('w-title').value.trim(),
+    category: document.getElementById('w-category').value,
+    severity: document.getElementById('w-severity').value,
+    region: document.getElementById('w-region').value.trim(),
+    description: document.getElementById('w-desc').value.trim(),
+    issuer: document.getElementById('w-issuer').value.trim(),
+    active: document.getElementById('w-active').checked,
+  };
+  saveState();
+  closeModal();
+  renderAdminWarnings();
+  renderWarnings();
+  showToast('✅ Warnung gespeichert!');
+}
+
+function editWarning(id) { showCreateWarning(id); }
+
+function deleteWarning(id) {
+  if (!confirm('Warnung wirklich löschen?')) return;
+  appState.warnings = appState.warnings.filter(w => w.id !== id);
+  saveState();
+  renderAdminWarnings();
+  renderWarnings();
+  showToast('🗑 Warnung gelöscht');
+}
+
+// ===== ADMIN: USERS =====
+function renderAdminUsers() {
+  const list = document.getElementById('admin-users-list');
+  if (!list) return;
+  list.innerHTML = appState.users.map(u => `
+    <div class="admin-user-item">
+      <div class="user-avatar">${u.username[0].toUpperCase()}</div>
+      <div class="user-info">
+        <div class="user-name">${escHtml(u.username)}</div>
+        <div class="user-role">${u.role === 'admin' ? '👑 Administrator' : '👤 Benutzer'}</div>
+      </div>
+      <span class="user-status-badge ${u.status === 'active' ? 'status-active' : 'status-blocked'}">${u.status === 'active' ? 'Aktiv' : 'Gesperrt'}</span>
+      ${u.id !== 'admin' ? `
+        <div style="display:flex;gap:5px;margin-left:6px">
+          ${u.status === 'active' ? `<button class="btn-danger" style="font-size:11px;padding:5px 8px" onclick="blockUser('${u.id}')">Sperren</button>` : `<button class="btn-edit" onclick="unblockUser('${u.id}')">Freigeben</button>`}
+          <button class="btn-delete" onclick="deleteUser('${u.id}')">🗑</button>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function showCreateUser() {
+  document.getElementById('modal-title').textContent = 'Benutzer erstellen';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="admin-form">
+      <div class="input-group">
+        <label>Benutzername</label>
+        <input type="text" id="u-username" placeholder="Benutzername">
+      </div>
+      <div class="input-group">
+        <label>Passwort</label>
+        <input type="password" id="u-password" placeholder="Passwort">
+      </div>
+      <div class="input-group">
+        <label>Rolle</label>
+        <select id="u-role">
+          <option value="user">👤 Benutzer</option>
+          <option value="admin">👑 Administrator</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="createUser()">Benutzer erstellen</button>
+    </div>
+  `;
+  openModal();
+}
+
+function createUser() {
+  const username = document.getElementById('u-username').value.trim();
+  const password = document.getElementById('u-password').value;
+  const role = document.getElementById('u-role').value;
+  if (!username || !password) { showToast('Bitte alle Felder ausfüllen'); return; }
+  if (appState.users.find(u => u.username === username)) { showToast('Benutzername bereits vergeben'); return; }
+  const user = { id: 'u_' + Date.now(), username, password, role, status: 'active', created: new Date().toISOString() };
+  appState.users.push(user);
+  saveState();
+  closeModal();
+  renderAdminUsers();
+  showToast('✅ Benutzer erstellt!');
+}
+
+function blockUser(id) {
+  const u = appState.users.find(u => u.id === id);
+  if (u) { u.status = 'blocked'; saveState(); renderAdminUsers(); showToast('Benutzer gesperrt'); }
+}
+
+function unblockUser(id) {
+  const u = appState.users.find(u => u.id === id);
+  if (u) { u.status = 'active'; saveState(); renderAdminUsers(); showToast('Benutzer freigegeben'); }
+}
+
+function deleteUser(id) {
+  if (!confirm('Benutzer wirklich löschen?')) return;
+  appState.users = appState.users.filter(u => u.id !== id);
+  saveState();
+  renderAdminUsers();
+  showToast('🗑 Benutzer gelöscht');
+}
+
+// ===== ADMIN: SWITCH PANEL =====
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('admin-' + tab).classList.add('active');
+}
+
+// ===== PUSH NOTIFICATIONS =====
+function sendPushNotification() {
+  const title = document.getElementById('push-title').value.trim();
+  const message = document.getElementById('push-message').value.trim();
+  const region = document.getElementById('push-region').value.trim();
+  if (!title || !message) { showToast('Bitte Titel und Nachricht eingeben'); return; }
+  triggerPushBanner(title, region || 'Deutschland', '');
+  showToast('📡 Push-Benachrichtigung gesendet!');
+  document.getElementById('push-title').value = '';
+  document.getElementById('push-message').value = '';
+  document.getElementById('push-region').value = '';
+}
+
+function triggerPushBanner(title, region, category) {
+  const cat = CATEGORIES[category] || {};
+  let banner = document.getElementById('push-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'push-banner';
+    banner.className = 'push-banner';
+    banner.innerHTML = `
+      <button class="push-banner-close" onclick="this.parentElement.classList.remove('show')">✕</button>
+      <div class="push-banner-title" id="pb-title"></div>
+      <div class="push-banner-body" id="pb-body"></div>
+    `;
+    document.getElementById('app').appendChild(banner);
+  }
+  document.getElementById('pb-title').textContent = `${cat.icon || '⚠'} ${title}`;
+  document.getElementById('pb-body').textContent = `Betroffene Region: ${region}`;
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 6000);
+}
+
+// ===== SETTINGS =====
+function togglePush() {
+  const on = document.getElementById('toggle-push').checked;
+  showToast(on ? '🔔 Push-Benachrichtigungen aktiviert' : '🔕 Push-Benachrichtigungen deaktiviert');
+}
+
+function toggleLocation() {
+  const on = document.getElementById('toggle-location').checked;
+  if (on && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(() => showToast('📍 Standort aktiviert'), () => {
+      document.getElementById('toggle-location').checked = false;
+      showToast('❌ Standortzugriff verweigert');
+    });
+  } else if (!on) {
+    showToast('📍 Standort deaktiviert');
+  }
+}
+
+function showAddPlace() {
+  const place = prompt('Ort eingeben (z.B. Berlin, Hamburg):');
+  if (place && place.trim()) {
+    const places = JSON.parse(localStorage.getItem('warna_places') || '[]');
+    places.push(place.trim());
+    localStorage.setItem('warna_places', JSON.stringify(places));
+    renderSavedPlaces();
+    showToast('✅ Ort gespeichert');
+  }
+}
+
+function renderSavedPlaces() {
+  const places = JSON.parse(localStorage.getItem('warna_places') || '[]');
+  const container = document.getElementById('saved-places-list');
+  if (!container) return;
+  container.innerHTML = places.map((p, i) => `
+    <div class="settings-item">
+      <span>📍 ${escHtml(p)}</span>
+      <button onclick="removePlace(${i})" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:18px">✕</button>
+    </div>
+  `).join('');
+}
+
+function removePlace(idx) {
+  const places = JSON.parse(localStorage.getItem('warna_places') || '[]');
+  places.splice(idx, 1);
+  localStorage.setItem('warna_places', JSON.stringify(places));
+  renderSavedPlaces();
+}
+
+// ===== MORE PAGES =====
+function showTips() {
+  showPublicView('tips', 'Notfalltipps');
+  const tipView = document.getElementById('view-tips');
+  if (!tipView) return;
+  tipView.innerHTML = `
+    <div class="tips-content">
+      ${Object.entries(CATEGORIES).map(([k, v]) => `
+        <div class="tip-block">
+          <h4>${v.icon} ${v.label}</h4>
+          ${v.recommendations.map(r => `<p style="margin-bottom:5px">${r.icon} ${r.text}</p>`).join('')}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function showEmergency() {
+  showPublicView('emergency', 'Notrufnummern');
+  const el = document.getElementById('view-emergency');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="tips-content">
+      <div class="tip-block">
+        <h4>🆘 Wichtige Notrufnummern</h4>
+        <div class="emergency-numbers" style="margin-top:10px">
+          <button class="emergency-btn" onclick="callNumber(112)"><span>112</span>Feuerwehr / Rettung</button>
+          <button class="emergency-btn" onclick="callNumber(110)"><span>110</span>Polizei</button>
+        </div>
+        <div class="emergency-numbers" style="margin-top:10px">
+          <button class="emergency-btn" style="background:#2980b9" onclick="callNumber('116117')"><span>116 117</span>Ärztl. Bereitschaft</button>
+          <button class="emergency-btn" style="background:#27ae60" onclick="callNumber('0800 111 0 111')"><span>0800 111 0 111</span>Telefonseelsorge</button>
+        </div>
+      </div>
+      <div class="tip-block">
+        <h4>📻 Informationsquellen</h4>
+        <p>Im Ernstfall aktuelle Lageinformationen über Lokalradio beziehen.</p>
+        <p style="margin-top:6px">Offizieller Notruf in Lebensgefahr: <strong>112</strong></p>
+      </div>
+    </div>
+  `;
+}
+
+function showAbout() {
+  showPublicView('about', 'Impressum');
+  const el = document.getElementById('view-about');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="tips-content">
+      <div class="tip-block">
+        <h4>ℹ WARNA – Warn- und Informations-App</h4>
+        <p>WARNA stellt offizielle Warnmeldungen der zuständigen Behörden bereit.</p>
+        <p style="margin-top:8px"><strong>Herausgeber:</strong> Admin / Betreiber</p>
+        <p style="margin-top:4px"><strong>Version:</strong> 1.0.0</p>
+        <p style="margin-top:8px">Diese App ist kostenlos und werbefrei.</p>
+      </div>
+    </div>
+  `;
+}
+
+// ===== DYNAMIC VIEW CREATION =====
+function ensureDynamicViews() {
+  const views = ['tips', 'emergency', 'about'];
+  views.forEach(v => {
+    if (!document.getElementById('view-' + v)) {
+      const div = document.createElement('div');
+      div.id = 'view-' + v;
+      div.className = 'view';
+      document.getElementById('public-main').appendChild(div);
+    }
+  });
+}
+
+// ===== MODAL =====
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ===== UTILS =====
+function escHtml(str = '') {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').classList.contains('active')) doLogin();
+});
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  ensureDynamicViews();
+  renderSavedPlaces();
+  renderWarnings();
+
+  // Load sample warning if none exist
+  if (appState.warnings.length === 0) {
+    appState.warnings = [
+      {
+        id: 'sample_1',
+        title: 'Rauchentwicklung – Neustrelitz',
+        category: 'feuer',
+        severity: 'hinweis',
+        region: 'Neustrelitz, Landkreis Mecklenburgische Seenplatte',
+        description: 'Aufgrund eines Brandereignisses kommt es zur einer Rauchentwicklung im Raum Neustrelitz.',
+        issuer: 'Integrierte Leitstelle des Landkreises Mecklenburgische Seenplatte',
+        active: true,
+        created: '2026-06-24T15:09:00.000Z',
+      }
+    ];
+    saveState();
+    renderWarnings();
+  }
+});
+</script>
+</body>
+</html>
